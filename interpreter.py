@@ -1,14 +1,46 @@
 
-class RelaxClass:
+class RelaxField:
+    def __init__(self, name: str):
+        self.name = name
 
-    def __init__(self, name: str = "", fields: list[str] = []):
+    def __repr__(self):
+        return self.name  # Ensuring meaningful representation
+
+
+class RelaxClass:
+    def __init__(self, name, fields: list[RelaxField]):
         self.name = name
         self.fields = fields
 
     def to_string(self):
-        return f"Class name: {self.name}, Class fields: {self.fields}"
+        field_names = ", ".join(field.name for field in self.fields)
+        return f"Class name: {self.name}, Class fields: [{field_names}]"
+    
+class RelaxReferenceField(RelaxField):
+
+    def __init__(self, name: str, reference_class: RelaxClass):
+        super().__init__(name)
+        self.reference_class = reference_class
+    
+"""class RelaxObject:
+
+    def __init__(self, clazz: 'RelaxClass', name: str, field_values: list[RelaxField]):
+        self.clazz = clazz
+        self.name = name
+        self.field_values = field_values
+
+    def get_field(self, field_name: str):
+        for field in self.field_values:
+            if field.name == field_name:
+                if isinstance(field, RelaxReferenceField):
+                    for object in relaxObjects:
+                        if object.field_values[0] == self.field_values[0]:
+                            return object
+                return field.value
+        raise ValueError(f"Field '{field_name}' not found")"""
     
 relaxClasses = []
+#relaxObjects = []
 
 def get_class(class_name: str):
     for clazz in relaxClasses:
@@ -18,9 +50,8 @@ def get_class(class_name: str):
 
 def class_has_field(clazz: RelaxClass, field_name: str):
     for field in clazz.fields:
-        if field == field_name:
+        if field.name == field_name:
             return True
-        
     return False
 
 def create_class(parts: list[str]):
@@ -30,13 +61,26 @@ def create_class(parts: list[str]):
         if part.startswith("@"):
             referenceClass: RelaxClass = get_class(part.split(".")[0].removeprefix("@"))
             print("Checking reference class: ", part.split(".")[0].removeprefix("@"), " field: ", part.split(".")[1])
-            if referenceClass and class_has_field(referenceClass, part.split(".")[1]):
-                pass
+            if referenceClass is None:
+                print("Reference class doesnt exist")
+            elif not class_has_field(referenceClass, part.split(".")[1]):
+                print("Reference field doesnt exist")
             else:
-                print("Reference class or field doesnt exist")
-        fields.append(part)
+                fields.append(RelaxReferenceField(part, referenceClass))
+        else:
+            fields.append(RelaxField(part))
     clazz = RelaxClass(name, fields)
     relaxClasses.append(clazz)
+
+"""def get_object(clazz: RelaxClass, name: str):
+    for object in relaxObjects:
+        if object.name == name:
+            return object
+    raise LookupError(f"Object with name: {name} not found")
+
+def create_object(clazz: RelaxClass, name: str, field_values: list):
+    field_values = list[RelaxField]
+    object = RelaxObject(clazz, name, )"""
 
 def interpret(code):
     parts = code.split()
@@ -46,8 +90,6 @@ def interpret(code):
 
 interpret("class Engine id brand weight")
 interpret("class Car id name color @Engine.id")
-interpret("create Engine my_engine some_engine_id some_brand some_weight")
-interpret("create Car my_car some_id some_name some_color some_engine_id")
 for clazz in relaxClasses:
     print(clazz.to_string())
 
