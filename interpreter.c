@@ -3,7 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 
-struct StringVariable{
+struct StringVariable {
     char* name;
     char* value;
 };
@@ -28,35 +28,64 @@ float evaluate_calculation(const char** tokens, int size, int offset) {
     for (int i = offset + 1; i < size; i = i + 2) {
         if (strcmp(tokens[i], "+") == 0) {
             base_number += strtof(tokens[i+1], NULL);
-            printf("base number after plus: %.2f\n", base_number);
         } else if (strcmp(tokens[i], "-") == 0) {
             base_number -= strtof(tokens[i+1], NULL);
-            printf("base number after minus: %.2f\n", base_number);
         }
     }
-
-    printf("number: %.2f\n", base_number);
     return base_number;
+}
+
+char* evaluate_string(const char** tokens, int size, int offset) {
+    char* base_string = "";
+    strcat(base_string, tokens[offset]);
+    return base_string;
 }
 
 void interpret(const char** tokens, int size) {
     if (isalpha(tokens[0][0])) {
         if (strcmp(tokens[1], "=") == 0) {
             printf("assignment\n");
-            if(isdigit(tokens[2][0])) {
+            if (isdigit(tokens[2][0])) {
                 floatVars[float_vars_count].name = strdup(tokens[0]);
                 printf("calculation\n");
                 floatVars[float_vars_count].value = evaluate_calculation(tokens, size, 2);
                 float_vars_count++;
+            } else if (tokens[2][0] == '\"') {
+                strVars[str_vars_count].name = strdup(tokens[0]);
+                printf("string\n");
+                strVars[str_vars_count].value = strdup(evaluate_string(tokens, size, 2));
+                str_vars_count++;
             }
         }
     }
 }
 
+void print_float_vars() {
+    printf("\nfloats:\n");
+    for (int i = 0; i < float_vars_count; i++) {
+        printf("%s = %.2f\n", floatVars[i].name, floatVars[i].value);
+    }
+}
+
+void print_string_vars() {
+    printf("\nstrings:\n");
+    for (int i = 0; i < str_vars_count; i++) {
+        printf("%s = %s\n", strVars[i].name, strVars[i].value);
+    }
+}
+
 int main() {
     init_vars(100);
-    const char* tokens[] = { "num", "=", "0", "+", "1", "-", "0.5" };
-    int size = sizeof(tokens) / sizeof(tokens[0]);
-    interpret(tokens, size);
+    const char* num_tokens[] = { "num", "=", "0", "+", "1", "-", "0.5" };
+    int size = sizeof(num_tokens) / sizeof(num_tokens[0]);
+    interpret(num_tokens, size);
+
+    const char* str_tokens[] = { "str", "=", "\"somestr\"" };
+    int size2 = sizeof(str_tokens) / sizeof(str_tokens[0]);
+    interpret(str_tokens, size2);
+
+    print_float_vars();
+    print_string_vars();
+
     return 0;
 }
