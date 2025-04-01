@@ -36,24 +36,55 @@ float evaluate_calculation(const char** tokens, int size, int offset) {
 }
 
 char* evaluate_string(const char** tokens, int size, int offset) {
-    char* base_string = "";
+    char base_string[1024] = "";
     strcat(base_string, tokens[offset]);
-    return base_string;
+    return strdup(base_string);
 }
 
 void interpret(const char** tokens, int size) {
+    if(size == 1) {
+        printf("C: function call\n");
+        char function_name[50];
+        char function_argument[50];
+        int is_arg = 0;
+        int function_name_index = 0;
+        int function_arg_index = 0;
+        for(int i = 0; i < strlen(tokens[0]); i++) {
+            if(tokens[0][i] == ')') {
+                break;
+            }
+            if(tokens[0][i] == '(') {
+                is_arg = 1;
+                i++; // skip the first parenhesis
+            }
+            if(is_arg == 0) {
+                function_name[function_name_index] = tokens[0][i];
+                function_name_index++;
+            } else {
+                function_argument[function_arg_index] = tokens[0][i];
+                function_arg_index++;
+            }
+        }
+        function_name[function_name_index+1] = '\0';
+        function_argument[function_arg_index+1] = '\0';
+
+        if(strcmp(function_name, "print") == 0) {
+            printf("R: %s", function_argument);
+        }
+    }
+    
     if (isalpha(tokens[0][0])) {
         if (strcmp(tokens[1], "=") == 0) {
-            printf("assignment\n");
+            printf("C: assignment\n");
             if (isdigit(tokens[2][0])) {
                 floatVars[float_vars_count].name = strdup(tokens[0]);
-                printf("calculation\n");
+                printf("C: calculation\n");
                 floatVars[float_vars_count].value = evaluate_calculation(tokens, size, 2);
                 float_vars_count++;
             } else if (tokens[2][0] == '\"') {
                 strVars[str_vars_count].name = strdup(tokens[0]);
-                printf("string\n");
-                strVars[str_vars_count].value = strdup(evaluate_string(tokens, size, 2));
+                printf("C: string\n");
+                strVars[str_vars_count].value = evaluate_string(tokens, size, 2);
                 str_vars_count++;
             }
         }
@@ -61,16 +92,16 @@ void interpret(const char** tokens, int size) {
 }
 
 void print_float_vars() {
-    printf("\nfloats:\n");
+    printf("\nC: floats:\n");
     for (int i = 0; i < float_vars_count; i++) {
-        printf("%s = %.2f\n", floatVars[i].name, floatVars[i].value);
+        printf("C: %s = %.2f\n", floatVars[i].name, floatVars[i].value);
     }
 }
 
 void print_string_vars() {
-    printf("\nstrings:\n");
+    printf("\nC: strings:\n");
     for (int i = 0; i < str_vars_count; i++) {
-        printf("%s = %s\n", strVars[i].name, strVars[i].value);
+        printf("C: %s = %s\n", strVars[i].name, strVars[i].value);
     }
 }
 
@@ -83,6 +114,9 @@ int main() {
     const char* str_tokens[] = { "str", "=", "\"somestr\"" };
     int size2 = sizeof(str_tokens) / sizeof(str_tokens[0]);
     interpret(str_tokens, size2);
+
+    const char* print_tokens[] = { "print(balls)" };
+    interpret(print_tokens, 1);
 
     print_float_vars();
     print_string_vars();
