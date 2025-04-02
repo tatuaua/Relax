@@ -49,7 +49,7 @@ float evaluate_calculation(const char** tokens, int size, int offset) {
 
 char* evaluate_string(const char** tokens, int size, int offset) {
     char base_string[1024] = "";
-    strcat(base_string, tokens[offset]);
+    strncat(base_string, tokens[offset] + 1, strlen(tokens[offset]) - 2);
     return strdup(base_string);
 }
 
@@ -76,12 +76,22 @@ void parse_function_name(const char* token, char* function_name, char* function_
     function_argument[function_arg_index] = '\0';
 }
 
-void relax_print_str(char* value) {
-    
+char* get_string_var_value(char* name) {
+    for(int i = 0; i < str_vars_count; i++) {
+        if(strcmp(strVars[i].name, name) == 0) {
+            return strVars[i].value;
+        }
+    }
+    return NULL;
 }
 
-void relax_print_float(float value) {
-
+float get_float_var_value(char* name) {
+    for(int i = 0; i < sizeof(floatVars) / sizeof(floatVars[0]); i++) {
+        if(strcmp(floatVars[i].name, name) == 0) {
+            return floatVars[i].value;
+        }
+    }
+    return -1;
 }
 
 void relax_print(char* arg) {
@@ -92,14 +102,19 @@ void relax_print(char* arg) {
             value[value_index++] = arg[i];
         }
         value[value_index] = '\0';
-        relax_print_str(value);
+        printf("R: %s", value);
     } else if(isdigit(arg[0])) {
-        relax_print_float(strtof(arg, NULL));
+        printf("R: %s", arg);
     } else {
-        if(is_string_variable(arg)) {
-            struct StringVariable strVar = get_string(arg);
+        char* str_value;
+        float float_value;
+        
+        if ((str_value = get_string_var_value(arg)) != NULL) {
+            printf("R: %s", str_value);
+        } else if ((float_value = get_float_var_value(arg)) != -1) { 
+            printf("R: %.2f", float_value);
         } else {
-            struct FloatVariable floatVar = get_float(arg);
+            printf("R: unable to print");
         }
     }
 }
@@ -111,7 +126,7 @@ void interpret(const char** tokens, int size) {
         parse_function_name(tokens[0], function_name, function_argument);
 
         if(strcmp(function_name, "print") == 0) {
-            printf("R: %s\n", function_argument);
+            relax_print(function_argument);
         } else {
             // Check if it's a custom function call
             for(int i = 0; i < function_count; i++) {
@@ -179,7 +194,7 @@ int main() {
     const char* str_tokens[] = { "str", "=", "\"somestr\"" };
     interpret(str_tokens, 3);
 
-    const char* function_tokens[] = { "myfunc()", "{", "print(balls)", "}"};
+    const char* function_tokens[] = { "myfunc()", "{", "print(str)", "}"};
     interpret(function_tokens, 4);
 
     const char* myfunc_tokens[] = { "myfunc()" };
