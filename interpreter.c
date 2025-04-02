@@ -76,6 +76,34 @@ void parse_function_name(const char* token, char* function_name, char* function_
     function_argument[function_arg_index] = '\0';
 }
 
+void relax_print_str(char* value) {
+    
+}
+
+void relax_print_float(float value) {
+
+}
+
+void relax_print(char* arg) {
+    if(arg[0] == '\"') {
+        char value[50] = "";
+        int value_index = 0;
+        for(int i = 1; i < strlen(arg) - 1; i++) {
+            value[value_index++] = arg[i];
+        }
+        value[value_index] = '\0';
+        relax_print_str(value);
+    } else if(isdigit(arg[0])) {
+        relax_print_float(strtof(arg, NULL));
+    } else {
+        if(is_string_variable(arg)) {
+            struct StringVariable strVar = get_string(arg);
+        } else {
+            struct FloatVariable floatVar = get_float(arg);
+        }
+    }
+}
+
 void interpret(const char** tokens, int size) {
     if(size == 1) {
         char function_name[50] = "";
