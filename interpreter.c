@@ -16,6 +16,8 @@ struct FloatVariable {
 struct Function {
     char* name;
     char* content;
+    char** statements;
+    int statement_count;
 };
 
 struct StringVariable *strVars = NULL;
@@ -121,6 +123,7 @@ void relax_print(char* arg) {
 
 void interpret(const char** tokens, int size) {
     if(size == 1) {
+        printf("C: function call");
         char function_name[50] = "";
         char function_argument[50] = "";
         parse_function_name(tokens[0], function_name, function_argument);
@@ -131,9 +134,10 @@ void interpret(const char** tokens, int size) {
             // Check if it's a custom function call
             for(int i = 0; i < function_count; i++) {
                 if(strcmp(functions[i].name, function_name) == 0) {
-                    const char* func_tokens[1] = {functions[i].content};
+                    /*const char* func_tokens[1] = {functions[i].content};
                     interpret(func_tokens, 1);
-                    break;
+                    break;*/
+
                 }
             }
         }
@@ -157,7 +161,7 @@ void interpret(const char** tokens, int size) {
         }
         if(strcmp(tokens[1], "{") == 0) {
             printf("C: function declaration\n");
-            if(size == 4 && strcmp(tokens[3], "}") == 0) {
+            /*if(size == 4 && strcmp(tokens[3], "}") == 0) {
                 char function_name[50] = "";
                 char function_argument[50] = "";
                 parse_function_name(tokens[0], function_name, function_argument);
@@ -165,7 +169,19 @@ void interpret(const char** tokens, int size) {
                 functions[function_count].name = strdup(function_name);
                 functions[function_count].content = strdup(tokens[2]);
                 function_count++;
+            }*/
+            char function_name[50] = "";
+            char function_argument[50] = "";
+            parse_function_name(tokens[0], function_name, function_argument);
+
+            struct Function *func = &functions[function_count];
+            func->name = strdup(function_name);
+            func->statements = (char**)malloc(sizeof(char*) * 50);
+            func->statement_count = 0;
+            for(int i = 2; i < size - 1; i++) {
+                func->statements[func->statement_count++] = strdup(tokens[i]);
             }
+            function_count++;
         }
     }
 }
@@ -184,6 +200,21 @@ void print_string_vars() {
     }
 }
 
+void print_functions() {
+    printf("\nC: functions:\n");
+    
+    for (int i = 0; i < function_count; i++) {
+        printf("Function #%d:\n", i + 1);
+        printf("Name: %s\n", functions[i].name);
+        printf("Statement count: %d\n", functions[i].statement_count);
+        
+        printf("Statements:\n");
+        for (int j = 0; j < functions[i].statement_count; j++) {
+            printf("  %d: %s\n", j + 1, functions[i].statements[j]);
+        }
+    }
+}
+
 int main() {
     init_vars(100);
     init_functions(100);
@@ -194,14 +225,20 @@ int main() {
     const char* str_tokens[] = { "str", "=", "\"somestr\"" };
     interpret(str_tokens, 3);
 
-    const char* function_tokens[] = { "myfunc()", "{", "print(str)", "}"};
+    const char* function_tokens[] = { 
+        "myfunc()", "{",
+        "x = 5 + 1",
+        "print(x)"
+        "}"
+    };
     interpret(function_tokens, 4);
 
-    const char* myfunc_tokens[] = { "myfunc()" };
-    interpret(myfunc_tokens, 1);
+    //const char* myfunc_tokens[] = { "myfunc()" };
+    //interpret(myfunc_tokens, 1);
 
     print_float_vars();
     print_string_vars();
+    print_functions();
 
     return 0;
 }
